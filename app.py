@@ -40,5 +40,5 @@ def explodinated(filename):
     return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
 
 if __name__ == "__main__":
-    app.run(host=os.getenv("EXPLODINATOR_HOST", "localhost"),
+    app.run(host=os.getenv("EXPLODINATOR_HOST", "0.0.0.0"),
             port=os.getenv("EXPLODINATOR_PORT", "8823"))
