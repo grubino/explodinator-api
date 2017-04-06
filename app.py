@@ -25,18 +25,18 @@ def _frame_gen(frames=[]):
         yield Image.composite(f, overlay, mask)
 
 
-@app.route("/explodinate", methods=['GET', 'POST'])
+@app.route("/explodinate", methods=['POST'])
 def explodinate():
     if request.method == 'POST' and 'frame0.jpg' in request.files:
         f = request.files['frame0.jpg']
         fname = secure_filename(f.name)
-        fpath = os.path.join(app.config['UPLOAD_FOLDER'], "-".join((uuid.uuid1(), fname)))
+        fpath = os.path.join(app.config['UPLOAD_FOLDER'], "-".join((str(uuid.uuid1()), fname)))
         f.save(fpath)
         explodinated_fpath = Explodinator(fpath, _frame_gen).explodinate()
         return redirect(url_for("explodinated", filename=explodinated_fpath))
 
 
-@app.route("/explodinated/<filename>")
+@app.route("/explodinated/<filename>", methods=['GET'])
 def explodinated(filename):
     return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
 
