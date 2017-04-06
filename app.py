@@ -30,7 +30,7 @@ def explodinate():
     if request.method == 'POST' and 'frame0.jpg' in request.files:
         f = request.files['frame0.jpg']
         fname = secure_filename(f.name)
-        fpath = os.path.join(app.config['UPLOAD_FOLDER'], "-".join((str(uuid.uuid1()), fname)))
+        fpath = "-".join((str(uuid.uuid1()), fname))
         f.save(fpath)
         explodinated_fpath = Explodinator(fpath, _frame_gen).explodinate()
         return redirect(url_for("explodinated", filename=explodinated_fpath))
