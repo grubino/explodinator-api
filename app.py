@@ -18,7 +18,6 @@ app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
 composite_path = os.path.join(os.path.dirname(__file__), 'imaging', 'resources', 'explodinate_composite.gif')
 
-
 def resize(img, new_size):
     g = new_size  # distinguishes whether width, height or both given
     image = img
@@ -65,9 +64,17 @@ def explodinate():
 def explodinated(filename):
     return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
 
+@app.before_request
+def before_request():
+    if request.url.startswith('http://'):
+        url = request.url.replace('http://', 'https://', 1)
+        code = 301
+        return redirect(url, code=code)
+
 if __name__ == "__main__":
     this_dir = os.path.dirname(__file__)
     app.run(host=os.getenv("EXPLODINATOR_HOST", "0.0.0.0"),
             port=int(os.getenv("EXPLODINATOR_PORT", "8823")),
-            debug=True,
+            debug=False,
+            ssl_context = ('cert.pem', 'key.pem'),
             extra_files=[f for f in os.walk(this_dir) if f.endswith('.py')])

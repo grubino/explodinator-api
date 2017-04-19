@@ -2,3 +2,4 @@ flask
 pyglet
 pgmagick
 pydevd
+pyopenssl
