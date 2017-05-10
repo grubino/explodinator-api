@@ -3,3 +3,8 @@ pyglet
 pgmagick
 pydevd
 pyopenssl
+git+https://github.com/ethereum/pyethereum@develop
+serpent
+nose
+pika
+pymongo
