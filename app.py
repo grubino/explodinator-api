@@ -54,6 +54,10 @@ def _frame_gen(frames=(), padding=15, explodination_geometry=DEFAULT_EXPLODINATI
         yield resized
 
 
+@app.route("/health", methods=['GET'])
+def health():
+    return 'ok'
+
 @app.route("/explodinate", methods=['POST'])
 @require_appkey
 def explodinate():
