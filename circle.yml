@@ -1,0 +1,12 @@
+machine:
+  services:
+    - docker
+
+build:
+  override:
+    docker build -t explodinator-api \
+    && docker tag explodinator-api:latest 844446962991.dkr.ecr.us-east-1.amazonaws.com/explodinator-api:$CIRCLE_SHA1
+
+deployment:
+  override:
+    docker push explodinator-api:latest 844446962991.dkr.ecr.us-east-1.amazonaws.com/explodinator-api
