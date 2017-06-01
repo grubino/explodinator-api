@@ -2,9 +2,9 @@ import os
 import uuid
 
 import flask
-from flask import request, redirect, url_for, abort
+from flask import request, redirect, url_for, abort, jsonify
 from flask.helpers import send_from_directory
-from pgmagick import Color, ImageList, Image, Blob, Geometry, CompositeOperator
+from pgmagick import ImageList, Image, Blob, Geometry, CompositeOperator
 from werkzeug.utils import secure_filename
 
 from imaging.explodinator import Explodinator
@@ -19,7 +19,8 @@ app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
 composite_path = os.path.join(os.path.dirname(__file__), 'imaging', 'resources', 'explodinate_composite.gif')
 
-DEFAULT_EXPLODINATION_GEOMETRY = Geometry(250, 250)
+DEFAULT_EXPLODINATION_GEOMETRY = Geometry(1000, 1000)
+
 
 def resize(img, new_size):
     g = new_size  # distinguishes whether width, height or both given
@@ -33,6 +34,7 @@ def resize(img, new_size):
         g.width(int(rw * h * 1.0 / rh))
     image.scale(g)
     return image
+
 
 def _frame_gen(frames=(), padding=15, explodination_geometry=DEFAULT_EXPLODINATION_GEOMETRY):
     overlay_list = ImageList()
@@ -58,6 +60,7 @@ def _frame_gen(frames=(), padding=15, explodination_geometry=DEFAULT_EXPLODINATI
 def health():
     return flask.Response()
 
+
 @app.route("/explodinate", methods=['POST'])
 @require_appkey
 def explodinate():
@@ -68,7 +71,7 @@ def explodinate():
         im = Image(Blob(f.read()), Geometry(250, 250))
         im.write(fpath)
         explodinated_fpath = Explodinator(fpath, _frame_gen).explodinate()
-        return redirect(url_for("explodinated", filename=os.path.basename(explodinated_fpath)))
+        return jsonify({'url': url_for("explodinated", filename=os.path.basename(explodinated_fpath))})
     else:
         return abort(400)
 
