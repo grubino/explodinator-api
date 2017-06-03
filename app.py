@@ -3,6 +3,7 @@ import uuid
 
 import flask
 from flask import request, redirect, abort, jsonify
+from flask.helpers import send_from_directory
 from pgmagick import ImageList, Image, Blob, Geometry, CompositeOperator
 from werkzeug.utils import secure_filename
 
@@ -87,6 +88,11 @@ def explodinations():
     return jsonify([{'key': obj.key}
                     for obj in EXPLODINATION_BUCKET.objects.all()
                     if obj.key.endswith('.gif') and not obj.key.startswith('explodinate')])
+
+
+@app.route("/privacy", methods=['GET'])
+def privacy():
+    return send_from_directory(os.path.dirname(__file__), 'privacy.txt')
 
 
 @app.before_request
