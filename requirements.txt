@@ -8,3 +8,4 @@ serpent
 nose
 pika
 pymongo
+boto3

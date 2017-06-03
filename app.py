@@ -2,8 +2,7 @@ import os
 import uuid
 
 import flask
-from flask import request, redirect, url_for, abort, jsonify
-from flask.helpers import send_from_directory
+from flask import request, redirect, abort, jsonify
 from pgmagick import ImageList, Image, Blob, Geometry, CompositeOperator
 from werkzeug.utils import secure_filename
 
@@ -20,6 +19,10 @@ app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 composite_path = os.path.join(os.path.dirname(__file__), 'imaging', 'resources', 'explodinate_composite.gif')
 
 DEFAULT_EXPLODINATION_GEOMETRY = Geometry(1000, 1000)
+
+import boto3
+s3 = boto3.resource('s3')
+EXPLODINATION_BUCKET = s3.Bucket('explodinations')
 
 
 def resize(img, new_size):
@@ -71,14 +74,20 @@ def explodinate():
         im = Image(Blob(f.read()), Geometry(250, 250))
         im.write(fpath)
         explodinated_fpath = Explodinator(fpath, _frame_gen).explodinate()
-        return jsonify({'url': url_for("explodinated", filename=os.path.basename(explodinated_fpath))})
+        key = os.path.basename(explodinated_fpath)
+        with open(explodinated_fpath, 'rb') as f:
+            EXPLODINATION_BUCKET.upload_fileobj(f, key, ExtraArgs={'ContentType': 'image/gif'})
+        return jsonify({'key': key})
     else:
         return abort(400)
 
 
-@app.route("/explodinated/<filename>", methods=['GET'])
-def explodinated(filename):
-    return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
+@app.route("/explodinations", methods=['GET'])
+def explodinations():
+    return jsonify([{'key': obj.key}
+                    for obj in EXPLODINATION_BUCKET.objects.all()
+                    if obj.key.endswith('.gif') and not obj.key.startswith('explodinate')])
+
 
 @app.before_request
 def before_request():
