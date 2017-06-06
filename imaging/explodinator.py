@@ -18,6 +18,7 @@ class Explodinator:
         self._outfp = outfp if outfp else '.'.join([os.path.splitext(fp)[0], 'gif'])
         self._gen_frames = gen
 
+
     def explodinate(self):
         out_frames = ImageList()
         for f in self._gen_frames(self._frames):
@@ -39,11 +40,11 @@ if __name__ == "__main__":
             frame.transparent(Color('#{06x}'.format(i)))
         return frame
 
-    def _filter_gen(frames=[]):
+    def _filter_gen(frames=()):
         for frame in frames:
             yield _splode_filter(frame, 10)
 
-    def _splode_gen(frames=[]):
+    def _splode_gen(frames=()):
 
         overlay_frames = Image(composite_path)
         for i, overlay in enumerate(ImageList(overlay_frames)):

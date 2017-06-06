@@ -9,3 +9,4 @@ nose
 pika
 pymongo
 boto3
+flask_cors
