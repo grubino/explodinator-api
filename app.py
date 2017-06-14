@@ -40,16 +40,29 @@ def health():
     return flask.Response()
 
 
+def extract_meme_params(raw_meme_positions, raw_meme_text):
+    meme_positions = tuple([int(x) for x in raw_meme_positions.split(',')])
+    meme_text = tuple(raw_meme_text.split(','))
+    return [(x, y) for x, y in zip(tuple(meme_text), zip(meme_positions[0::2], meme_positions[1::2]))
+            if len(x) > 0 and len(y) > 1]
+
+
 @app.route("/explodinate", methods=['POST'])
 @require_appkey
 def explodinate():
+
+    meme_layout = extract_meme_params(request.args.get('meme_pos', ''),
+                                      request.args.get('meme_text', ''))
+    print(meme_layout)
+
     if 'frame0.jpg' in request.files or 'file' in request.files:
         f = request.files.get('frame0.jpg', request.files.get('file'))
         fname = secure_filename(f.name)
         fpath = os.path.join(app.config['UPLOAD_FOLDER'], "-".join((str(uuid.uuid1()), fname)))
         im = Image(Blob(f.read()), Geometry(250, 250))
+        im.scale('250x250')
         im.write(fpath)
-        explodinated_fpath = Explodinator(fpath, default_frame_gen).explodinate()
+        explodinated_fpath = Explodinator(fpath, default_frame_gen, meme_text=meme_layout).explodinate()
         key = os.path.basename(explodinated_fpath)
         with open(explodinated_fpath, 'rb') as f:
             EXPLODINATION_BUCKET.upload_fileobj(f, key, ExtraArgs={'ContentType': 'image/gif'})

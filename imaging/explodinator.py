@@ -12,20 +12,19 @@ def identity_frame_gen(*frames):
 
 class Explodinator:
 
-    def __init__(self, fp, gen=lambda x: x, outfp=None):
+    def __init__(self, fp, gen=lambda x: x, outfp=None, meme_text=()):
         self._original = Image(fp)
         self._frames = reduce(lambda x, y: x + [Image(self._original)], range(48), [])
         self._outfp = outfp if outfp else '.'.join([os.path.splitext(fp)[0], 'gif'])
         self._gen_frames = gen
-
+        self._meme_text = meme_text
 
     def explodinate(self):
         out_frames = ImageList()
-        for f in self._gen_frames(self._frames):
+        for f in self._gen_frames(self._frames, meme_text_tup=self._meme_text):
             out_frames.append(f)
         out_frames.writeImages(self._outfp)
         return self._outfp
-
 
 
 if __name__ == "__main__":
