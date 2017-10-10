@@ -1,6 +1,6 @@
 from collections import namedtuple
 
-Bid = namedtuple('Bid', ['contractAddr', 'xplodFile', 'shareCount', 'expiry'])
+Bid = namedtuple('Bid', ['contractAddr', 'xplodKey', 'shareCount', 'expiry'])
 
 
 class BidStorageBase:

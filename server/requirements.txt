@@ -1,0 +1,6 @@
+flask
+pydevd
+nose
+pika
+boto3
+flask_cors

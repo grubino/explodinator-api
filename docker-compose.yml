@@ -1,0 +1,26 @@
+version: "3.3"
+
+secrets:
+  cert.pem:
+    file: ./nginx/cert.pem
+  key.pem:
+    file: ./nginx/key.pem
+
+services:
+  explodinator-api:
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+    ports:
+      - "8080"
+  explodinator-proxy:
+    build: 
+      context: .
+      dockerfile: Dockerfile
+    secrets:
+      - cert.pem
+      - key.pem
+    links:
+      - explodinator-api
+    ports:
+      - "443:443"

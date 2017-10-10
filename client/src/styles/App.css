@@ -4,18 +4,29 @@ body {
   background: #222;
 }
 
-.index img {
-  margin: 40px auto;
-  border-radius: 4px;
-  background: #fff;
-  display: block;
+.sticky {
+  position: -webkit-sticky;
+  position: sticky;
 }
 
-.index .notice {
-  margin: 20px auto;
-  padding: 15px 0;
-  text-align: center;
-  border: 1px solid #000;
-  border-width: 1px 0;
-  background: #666;
+.sticky.sticky-fixed.is-sticky {
+  margin-top: 0;
+  margin-bottom: 0;
+  position: fixed;
+  -webkit-backface-visibility: hidden;
+  -moz-backface-visibility: hidden;
+  backface-visibility: hidden;
 }
+
+.sticky.sticky-fixed.is-sticky:not([style*="margin-top"]) {
+  margin-top: 0 !important;
+}
+.sticky.sticky-fixed.is-sticky:not([style*="margin-bottom"]) {
+  margin-bottom: 0 !important;
+}
+
+
+.sticky.sticky-fixed.is-absolute{
+  position: absolute;
+}
+
