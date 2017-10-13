@@ -4,7 +4,7 @@
 const _Environments = {
   production:  {
     BASE_URL: 'https://explodinator.org/v1',
-    API_KEY: 's3cr3p4ssw0rd',
+    API_KEY: 's3cr3tp4ssw0rd',
     S3_BASE: 'https://s3.amazonaws.com/explodinations'
   },
   staging:     {BASE_URL: '', API_KEY: ''},
