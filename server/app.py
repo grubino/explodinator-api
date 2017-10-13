@@ -1,3 +1,4 @@
+import configparser
 import os
 import uuid
 
@@ -17,21 +18,19 @@ os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 app = flask.Flask(__name__, static_url_path='/web', static_folder='./client/dist')
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
-s3 = boto3.resource('s3')
+aws_config = configparser.ConfigParser()
+aws_config.read('/run/secrets/aws_creds')
+s3 = boto3.resource('s3', aws_access_key_id=aws_config['default']['aws_access_key_id'],
+                    aws_secret_access_key=aws_config['default']['aws_secret_access_key'])
 EXPLODINATION_BUCKET = s3.Bucket('explodinations')
 
 
-@app.route("/")
-def index():
-    return redirect('/web/index.html')
-
-
-@app.route("/favicon.ico")
+@app.route("/v1/favicon.ico")
 def favicon():
     return redirect('/web/favicon.ico')
 
 
-@app.route("/health", methods=['GET'])
+@app.route("/v1/health", methods=['GET'])
 def health():
     return flask.Response()
 
@@ -43,7 +42,7 @@ def extract_meme_params(raw_meme_positions, raw_meme_text):
             if len(x) > 0 and len(y) > 1]
 
 
-@app.route("/uploadinate", methods=['POST'])
+@app.route("/v1/uploadinate", methods=['POST'])
 @require_appkey
 def uploadinate():
 
@@ -60,11 +59,13 @@ def uploadinate():
 
     return abort(400)
 
-@app.route("/uploadinations/<key>", methods=['GET'])
+
+@app.route("/v1/uploadinations/<key>", methods=['GET'])
 def uploadinations(key):
     return send_from_directory(UPLOAD_FOLDER, key)
 
-@app.route("/explodinate", methods=['POST'])
+
+@app.route("/v1/explodinate", methods=['POST'])
 @require_appkey
 def explodinate():
 
@@ -84,14 +85,14 @@ def explodinate():
         return abort(400)
 
 
-@app.route("/explodinations", methods=['GET'])
+@app.route("/v1/explodinations", methods=['GET'])
 def explodinations():
     return jsonify([{'key': obj.key}
                     for obj in EXPLODINATION_BUCKET.objects.all()
                     if obj.key.endswith('.gif') and not obj.key.startswith('explodinate')])
 
 
-@app.route("/privacy", methods=['GET'])
+@app.route("/v1/privacy", methods=['GET'])
 def privacy():
     return send_from_directory(os.path.dirname(__file__), 'privacy.txt')
 

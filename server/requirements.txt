@@ -4,3 +4,4 @@ nose
 pika
 boto3
 flask_cors
+configparser

@@ -2,10 +2,10 @@
  * Created by gregrubino on 4/14/17.
  */
 const _Environments = {
-  production:  {BASE_URL: '', API_KEY: ''},
+  production:  {BASE_URL: 'https://explodinator.org/v1', API_KEY: 's3cr3p4ssw0rd'},
   staging:     {BASE_URL: '', API_KEY: ''},
   development: {
-    BASE_URL: 'https://explodinator.org/v1',
+    BASE_URL: 'https://localhost/v1',
     S3_BASE: 'https://s3.amazonaws.com/explodinations',
     API_KEY: 's3cr3tp4ssw0rd'
   }
@@ -13,7 +13,7 @@ const _Environments = {
 
 function getEnvironment() {
   // Insert logic here to get the current platform (e.g. staging, production, etc)
-  let platform = 'development'; // TODO - get from environment“
+  let platform = process.env.EXPLODINATOR_ENV || 'development';
 
   // ...now return the correct environment
   return _Environments[platform];

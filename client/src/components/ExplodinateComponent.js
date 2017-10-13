@@ -6,9 +6,6 @@ import Modal from 'react-bootstrap/lib/Modal';
 import ExplodinatorCube from './ExplodinatorCube';
 import Environment from './Environment';
 
-require('styles/Explodinate.css');
-
-
 class ExplodinateComponent extends React.Component {
   constructor(props) {
     super(props);

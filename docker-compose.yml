@@ -5,12 +5,16 @@ secrets:
     file: ./nginx/cert.pem
   key.pem:
     file: ./nginx/key.pem
+  aws_creds:
+    file: ~/.aws/credentials
 
 services:
   explodinator-api:
     build:
       context: ./server
       dockerfile: Dockerfile
+    secrets:
+      - aws_creds
     ports:
       - "8080"
   explodinator-proxy:
