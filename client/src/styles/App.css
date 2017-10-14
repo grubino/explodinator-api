@@ -33,3 +33,7 @@ body {
   position: absolute;
 }
 
+button {
+  background-color: #222222;
+  margin: 5px;
+}

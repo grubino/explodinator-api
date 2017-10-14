@@ -9,7 +9,7 @@ const _Environments = {
   },
   staging:     {BASE_URL: '', API_KEY: ''},
   development: {
-    BASE_URL: 'https://localhost/v1',
+    BASE_URL: 'http://localhost:8080/v1',
     S3_BASE: 'https://s3.amazonaws.com/explodinations',
     API_KEY: 's3cr3tp4ssw0rd'
   }
