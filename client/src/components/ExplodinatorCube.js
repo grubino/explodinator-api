@@ -1,7 +1,6 @@
 import React from 'react';
 import * as THREE from 'three';
 import React3 from 'react-three-renderer';
-import {MdArrowBack, MdArrowForward, MdArrowDownward, MdArrowUpward} from 'react-icons/lib/md';
 
 export default class ExplodinatorCube extends React.Component {
   constructor(props, context) {
@@ -14,8 +13,14 @@ export default class ExplodinatorCube extends React.Component {
       clickPosition: [0, 0],
       cameraPosition: new THREE.Vector3(0, 0, 10),
       lookAt: new THREE.Vector3(0, 0, 0),
-      trianglePositions: [],
-      triangleRotations: []
+      triangleRotations: [],
+      triangleRotationMagnitudes: [],
+      triangleTrajectories: [],
+      triangleMagnitudes: [],
+      triangleVelocities: [],
+      triangleAccelerations: [],
+      triangleAccelerationDecay: 0.8,
+      trianglePositions: []
     };
 
   }
@@ -30,8 +35,8 @@ export default class ExplodinatorCube extends React.Component {
       return x < min ? min : (x > max ? max : x);
     }
 
-    const ringRadius = 0.1, ringSize = 12,
-      ringCount = 10, rings = new Array(ringCount),
+    const ringRadius = 0.05, ringSize = 20,
+      ringCount = 20, rings = new Array(ringCount),
       centerX = this.state.clickPosition[0],
       centerY = this.state.clickPosition[1];
     for (let i = 1; i < ringCount; i++) {
@@ -51,9 +56,29 @@ export default class ExplodinatorCube extends React.Component {
       });
     }).reduce((a, b) => a.concat(b), []));
     const triangles = THREE.ShapeUtils.triangulate(vertices);
-    const positions = triangles.map(() => new THREE.Vector3(0, 0, 0));
-    const rotations = triangles.map(() => new THREE.Euler());
-    this.setState({triangles: triangles, trianglePositions: positions, triangleRotations: rotations});
+    const rotations = triangles.map(() => new THREE.Euler(Math.random(), Math.random(), Math.random()));
+    const rotationMagnitudes = triangles.map(() => 0);
+    const trajectories = triangles.map(() => new THREE.Vector3(
+      Math.random()-0.5, Math.random()-0.5, Math.random()-0.5));
+    const magnitudes = triangles.map(() => 0);
+    const velocities = triangles.map(() => 0);
+    const accelerations = triangles.map(() => 0);
+    this.setState({
+      triangles: triangles,
+      triangleRotations: rotations.map((r, i) =>
+        new THREE.Euler(
+          r.x*rotationMagnitudes[i],
+          r.y*rotationMagnitudes[i],
+          r.z*rotationMagnitudes[i]
+        )),
+      triangleRotationMagnitudes: rotationMagnitudes,
+      triangleTrajectories: trajectories,
+      triangleMagnitudes: magnitudes,
+      triangleVelocities: velocities,
+      triangleAccelerations: accelerations,
+      trianglePositions: trajectories.map((t, i) => new THREE.Vector3(
+        t.x*magnitudes[i], t.y*magnitudes[i], t.z*magnitudes[i]))
+    });
   }
 
   _setWidth(node) {
@@ -84,19 +109,30 @@ export default class ExplodinatorCube extends React.Component {
   }
 
   _updateTrianglePositions() {
-    const trianglePositions = this.state.trianglePositions;
-    this.setState({trianglePositions: trianglePositions.map(t => new THREE.Vector3(
-      t.x+0.05*(Math.random()-0.5),
-      t.y+0.05*(Math.random()-0.5),
-      t.z+0.05*(Math.random()-0.5)))});
+    const triangleAccelerations = this.state.triangleAccelerations.map(a => a * this.state.triangleAccelerationDecay);
+    const triangleVelocities = this.state.triangleVelocities.map((v, i) =>
+      v + triangleAccelerations[i]);
+    const triangleMagnitudes = this.state.triangleMagnitudes.map((m, i) =>
+      m + triangleVelocities[i]);
+    const trianglePositions = this.state.triangleTrajectories.map((t, i) => new THREE.Vector3(
+      t.x*triangleMagnitudes[i], t.y*triangleMagnitudes[i], t.z*triangleMagnitudes[i]
+    ));
+    this.setState({
+      trianglePositions: trianglePositions,
+      triangleMagnitudes: triangleMagnitudes,
+      triangleVelocities: triangleVelocities,
+      triangleAccelerations: triangleAccelerations
+    });
   }
 
   _updateTriangleRotations() {
-    const triangleRotations = this.state.triangleRotations;
-    this.setState({triangleRotations: triangleRotations.map(t => new THREE.Euler(
-      t.x+0.05*(Math.random()-0.5),
-      t.y+0.05*(Math.random()-0.5),
-      t.z+0.05*(Math.random()-0.5)))});
+    const triangleRotationMagnitudes = this.state.triangleRotationMagnitudes.map(m => m + Math.PI / 0.1);
+    const triangleRotations = this.state.triangleRotations.map((r, i) =>
+      new THREE.Euler(
+        triangleRotationMagnitudes[i]*r.x,
+        triangleRotationMagnitudes[i]*r.y,
+        triangleRotationMagnitudes[i]*r.z));
+    this.setState({triangleRotations: triangleRotations});
   }
 
   _updateTriangles() {
@@ -104,13 +140,33 @@ export default class ExplodinatorCube extends React.Component {
     this._updateTriangleRotations();
   }
 
+  _explodinate() {
+    const accelerations = this.state.triangles.map(() => 0.05);
+    this.setState({
+      triangleAccelerations: accelerations
+    });
+  }
+
+  _reimplodinate() {
+    const accelerations = this.state.triangles.map(() => 0);
+    const velocities = this.state.triangles.map(() => 0);
+    const magnitudes = this.state.triangles.map(() => 0);
+    const positions = this.state.triangleTrajectories.map((t, i) => new THREE.Vector3(
+      t.x*magnitudes[i], t.y*magnitudes[i], t.z*magnitudes[i])
+    );
+    this.setState({
+      triangleAccelerations: accelerations,
+      triangleVelocities: velocities,
+      triangleMagnitudes: magnitudes,
+      trianglePositions: positions
+    });
+  }
+
   render() {
     return (
       <div ref={(node) => this._setWidth(node)}>
-        <button onClick={this._moveUp.bind(this)}><MdArrowUpward /></button>
-        <button onClick={this._moveLeft.bind(this)}><MdArrowBack /></button>
-        <button onClick={this._moveRight.bind(this)}><MdArrowForward /></button>
-        <button onClick={this._moveDown.bind(this)}><MdArrowDownward /></button>
+        <button onClick={this._explodinate.bind(this)}>Explodinate</button>
+        <button onClick={this._reimplodinate.bind(this)}>Reimplodinate</button>
         <React3 mainCamera="camera"
                 width={this.state.width}
                 height={this.state.height}
