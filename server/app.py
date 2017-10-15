@@ -18,10 +18,14 @@ os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 app = flask.Flask(__name__, static_url_path='/web', static_folder='./client/dist')
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
-aws_config = configparser.ConfigParser()
-aws_config.read('/run/secrets/aws_creds')
-s3 = boto3.resource('s3', aws_access_key_id=aws_config['default']['aws_access_key_id'],
-                    aws_secret_access_key=aws_config['default']['aws_secret_access_key'])
+if os.path.exists('/run/secrets/aws_creds'):
+    aws_config = configparser.ConfigParser()
+    aws_config.read('/run/secrets/aws_creds')
+    s3 = boto3.resource('s3', aws_access_key_id=aws_config['default']['aws_access_key_id'],
+                        aws_secret_access_key=aws_config['default']['aws_secret_access_key'])
+else:
+    s3 = boto3.resource('s3')
+
 EXPLODINATION_BUCKET = s3.Bucket('explodinations')
 
 

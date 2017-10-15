@@ -42,6 +42,8 @@ class ExplodinateComponent extends React.Component {
   render() {
     return (
       <div>
+        <button style={{'display': this.state.imageUrl === null ? 'none': 'inherit'}}
+                onClick={() => this.setState({showModal: true})}>Explodinate Dialog</button>
         <DropzoneComponent
           config={this.componentConfig}
           eventHandlers={this.eventHandlers}

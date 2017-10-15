@@ -2,6 +2,7 @@
 
 import React from 'react';
 import Gallery from 'react-photo-gallery';
+import Modal from 'react-bootstrap/lib/Modal';
 import { PropTypes } from 'prop-types';
 
 require('styles/Explodinations.css');
@@ -10,10 +11,11 @@ class ExplodinationsComponent extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
-      explodinations: []
+      explodinations: [],
+      selectedExplodination: null
     };
     this.explodinateIndicator = (
-      <img src={`${this.props.s3UrlBase}/explodinate.gif`}/>
+      <img width="100%" src={`${this.props.s3UrlBase}/explodinate.gif`}/>
     );
   }
 
@@ -33,6 +35,7 @@ class ExplodinationsComponent extends React.Component {
             let newImages = this.state.explodinations.slice();
             newImages.push({
               src: `${s3UrlBase}/${item.key}`,
+              key: item.key,
               width: image.width,
               height: image.height
             });
@@ -49,7 +52,21 @@ class ExplodinationsComponent extends React.Component {
     let explodinations = this.state.explodinations;
     if (explodinations.length > 0) {
       return (
-        <Gallery photos={this.state.explodinations}/>
+        <div>
+        <Gallery photos={this.state.explodinations}
+                 onClick={(event, info) => this.setState({selectedExplodination: this.state.explodinations[info.index]})}/>
+          <Modal show={this.state.selectedExplodination !== null}
+                 onHide={() => this.setState({selectedExplodination: null})}>
+            <Modal.Header style={{backgroundColor: '#777'}} closeButton>
+              <Modal.Title>
+                { `Explodination: ${this.state.selectedExplodination && this.state.selectedExplodination.key}` }
+              </Modal.Title>
+            </Modal.Header>
+            <Modal.Body style={{backgroundColor: '#333'}}>
+              <img width="100%" src={this.state.selectedExplodination && this.state.selectedExplodination.src}/>
+            </Modal.Body>
+          </Modal>
+        </div>
       );
     } else {
       return (<div>{this.explodinateIndicator}</div>);

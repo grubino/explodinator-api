@@ -14,6 +14,7 @@ export default class ExplodinatorCube extends React.Component {
       cameraPosition: new THREE.Vector3(0, 0, 10),
       lookAt: new THREE.Vector3(0, 0, 0),
       triangleRotations: [],
+      triangleInitialRotations: [],
       triangleRotationMagnitudes: [],
       triangleTrajectories: [],
       triangleMagnitudes: [],
@@ -35,15 +36,15 @@ export default class ExplodinatorCube extends React.Component {
       return x < min ? min : (x > max ? max : x);
     }
 
-    const ringRadius = 0.05, ringSize = 20,
-      ringCount = 20, rings = new Array(ringCount),
+    const ringRadius = 0.1, ringSize = 33,
+      ringCount = 13, rings = new Array(ringCount),
       centerX = this.state.clickPosition[0],
       centerY = this.state.clickPosition[1];
     for (let i = 1; i < ringCount; i++) {
       rings[i] = { r: ringRadius * i, c: ringSize };
     }
     const vertices = [new THREE.Vector3(centerX, centerY, 0)].concat(rings.map(r => {
-      const count = r.c, radius = r.r, variance = r.r * 0.05,
+      const count = r.c, radius = r.r, variance = r.r * 0.01,
         ary = new Array(count).fill(0);
       return ary.map((zero, j) => {
         const x = clamp(
@@ -58,6 +59,7 @@ export default class ExplodinatorCube extends React.Component {
     const triangles = THREE.ShapeUtils.triangulate(vertices);
     const rotations = triangles.map(() => new THREE.Euler(Math.random(), Math.random(), Math.random()));
     const rotationMagnitudes = triangles.map(() => 0);
+    const rotationVelocities = triangles.map(() => 0);
     const trajectories = triangles.map(() => new THREE.Vector3(
       Math.random()-0.5, Math.random()-0.5, Math.random()-0.5));
     const magnitudes = triangles.map(() => 0);
@@ -65,12 +67,14 @@ export default class ExplodinatorCube extends React.Component {
     const accelerations = triangles.map(() => 0);
     this.setState({
       triangles: triangles,
+      triangleInitialRotations: rotations,
       triangleRotations: rotations.map((r, i) =>
         new THREE.Euler(
           r.x*rotationMagnitudes[i],
           r.y*rotationMagnitudes[i],
           r.z*rotationMagnitudes[i]
         )),
+      triangleRotationVelocities: rotationVelocities,
       triangleRotationMagnitudes: rotationMagnitudes,
       triangleTrajectories: trajectories,
       triangleMagnitudes: magnitudes,
@@ -126,13 +130,14 @@ export default class ExplodinatorCube extends React.Component {
   }
 
   _updateTriangleRotations() {
-    const triangleRotationMagnitudes = this.state.triangleRotationMagnitudes.map(m => m + Math.PI / 0.1);
-    const triangleRotations = this.state.triangleRotations.map((r, i) =>
+    const triangleRotationMagnitudes = this.state.triangleRotationMagnitudes.map((m, i) =>
+      m + this.state.triangleRotationVelocities[i]);
+    const triangleRotations = this.state.triangleInitialRotations.map((r, i) =>
       new THREE.Euler(
         triangleRotationMagnitudes[i]*r.x,
         triangleRotationMagnitudes[i]*r.y,
         triangleRotationMagnitudes[i]*r.z));
-    this.setState({triangleRotations: triangleRotations});
+    this.setState({triangleRotations: triangleRotations, triangleRotationMagnitudes: triangleRotationMagnitudes});
   }
 
   _updateTriangles() {
@@ -141,9 +146,11 @@ export default class ExplodinatorCube extends React.Component {
   }
 
   _explodinate() {
-    const accelerations = this.state.triangles.map(() => 0.05);
+    const accelerations = this.state.triangles.map(() => 0.09);
+    const rotationVelocities = this.state.triangles.map(() => 0.04 * Math.PI);
     this.setState({
-      triangleAccelerations: accelerations
+      triangleAccelerations: accelerations,
+      triangleRotationVelocities: rotationVelocities
     });
   }
 
@@ -154,11 +161,15 @@ export default class ExplodinatorCube extends React.Component {
     const positions = this.state.triangleTrajectories.map((t, i) => new THREE.Vector3(
       t.x*magnitudes[i], t.y*magnitudes[i], t.z*magnitudes[i])
     );
+    const rotationVelocities = this.state.triangles.map(() => 0);
+    const rotationMagnitudes = this.state.triangles.map(() => 0);
     this.setState({
       triangleAccelerations: accelerations,
       triangleVelocities: velocities,
       triangleMagnitudes: magnitudes,
-      trianglePositions: positions
+      trianglePositions: positions,
+      triangleRotationMagnitudes: rotationMagnitudes,
+      triangleRotationVelocities: rotationVelocities
     });
   }
 
