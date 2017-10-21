@@ -15,7 +15,9 @@ ALLOWED_EXTENSIONS = {'jpg', 'jpeg'}
 UPLOAD_FOLDER = os.path.join(os.path.dirname(__file__), '.tmp')
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
-app = flask.Flask(__name__, static_url_path='/web', static_folder='./client/dist')
+app = flask.Flask(__name__)
+CORS(app)
+
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
 if os.path.exists('/run/secrets/aws_creds'):
@@ -100,7 +102,6 @@ def explodinations():
 def privacy():
     return send_from_directory(os.path.dirname(__file__), 'privacy.txt')
 
+
 if __name__ == "__main__":
-    this_dir = os.path.dirname(__file__)
-    CORS(app)
     app.run(host=os.getenv("EXPLODINATOR_HOST", "0.0.0.0"), port=8080, debug=False)

@@ -5,6 +5,11 @@ import React3 from 'react-three-renderer';
 export default class ExplodinatorCube extends React.Component {
   constructor(props, context) {
     super(props, context);
+
+    const posArray = new Float32Array(300);
+    for (let i = 0; i < 300; i++) {
+      posArray[i] = Math.random() - 0.5;
+    }
     this.state = {
       cubeRotation: new THREE.Euler(),
       width: 0,
@@ -21,7 +26,10 @@ export default class ExplodinatorCube extends React.Component {
       triangleVelocities: [],
       triangleAccelerations: [],
       triangleAccelerationDecay: 0.8,
-      trianglePositions: []
+      trianglePositions: [],
+      explosionLocation: new THREE.Vector3(0, 0, 0),
+      explosionRotation: new THREE.Euler(),
+      bufferPositionAttribute: new THREE.BufferAttribute(posArray, 3)
     };
 
   }
@@ -36,35 +44,35 @@ export default class ExplodinatorCube extends React.Component {
       return x < min ? min : (x > max ? max : x);
     }
 
-    const ringRadius = 0.1, ringSize = 33,
-      ringCount = 13, rings = new Array(ringCount),
+    const ringRadius = 0.01, ringSize = 21,
+      ringCount = 6, rings = new Array(ringCount),
       centerX = this.state.clickPosition[0],
       centerY = this.state.clickPosition[1];
+
     for (let i = 1; i < ringCount; i++) {
       rings[i] = { r: ringRadius * i, c: ringSize };
     }
-    const vertices = [new THREE.Vector3(centerX, centerY, 0)].concat(rings.map(r => {
-      const count = r.c, radius = r.r, variance = r.r * 0.01,
+
+    const vertices = [new THREE.Vector3(centerX, centerY, 0)].concat(rings.map((r, i) => {
+      const count = r.c, radius = Math.pow(2, i) * r.r, variance = r.r * 0.01,
         ary = new Array(count).fill(0);
       return ary.map((zero, j) => {
         const x = clamp(
-          radius * Math.cos((j / count) * 2 * Math.PI) + centerX + 2*(Math.random() - 0.5) * variance,
-          -1, 1);
-        const y = clamp(
-          radius * Math.sin((j / count) * 2 * Math.PI) + centerY + 2*(Math.random() - 0.5) * variance,
-          -1, 1);
+          radius * Math.cos((j / count) * 2 * Math.PI) + centerX + 2*(Math.random() - 0.5) * variance, -1, 1),
+          y = clamp(radius * Math.sin((j / count) * 2 * Math.PI) + centerY + 2*(Math.random() - 0.5) * variance, -1, 1);
         return new THREE.Vector3(x, y, 0);
       });
-    }).reduce((a, b) => a.concat(b), []));
-    const triangles = THREE.ShapeUtils.triangulate(vertices);
-    const rotations = triangles.map(() => new THREE.Euler(Math.random(), Math.random(), Math.random()));
-    const rotationMagnitudes = triangles.map(() => 0);
-    const rotationVelocities = triangles.map(() => 0);
-    const trajectories = triangles.map(() => new THREE.Vector3(
-      Math.random()-0.5, Math.random()-0.5, Math.random()-0.5));
-    const magnitudes = triangles.map(() => 0);
-    const velocities = triangles.map(() => 0);
-    const accelerations = triangles.map(() => 0);
+    }).reduce((a, b) => a.concat(b), [])),
+      triangles = THREE.ShapeUtils.triangulate(vertices),
+      rotations = triangles.map(() => new THREE.Euler(Math.random(), Math.random(), Math.random())),
+      rotationMagnitudes = triangles.map(() => 0),
+      rotationVelocities = triangles.map(() => 0),
+      trajectories = triangles.map(() => new THREE.Vector3(
+        Math.random()-0.5, Math.random()-0.5, Math.random()-0.5)),
+      magnitudes = triangles.map(() => 0),
+      velocities = triangles.map(() => 0),
+      accelerations = triangles.map(() => 0);
+
     this.setState({
       triangles: triangles,
       triangleInitialRotations: rotations,
@@ -146,8 +154,8 @@ export default class ExplodinatorCube extends React.Component {
   }
 
   _explodinate() {
-    const accelerations = this.state.triangles.map(() => 0.09);
-    const rotationVelocities = this.state.triangles.map(() => 0.04 * Math.PI);
+    const accelerations = this.state.triangles.map(() => 0.03);
+    const rotationVelocities = this.state.triangles.map(() => 0.01 * Math.PI);
     this.setState({
       triangleAccelerations: accelerations,
       triangleRotationVelocities: rotationVelocities
