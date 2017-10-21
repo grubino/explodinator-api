@@ -11,4 +11,6 @@ COPY . /usr/src/app
 
 EXPOSE 8080
 
+ENV PYTHONPATH=/usr/src/app
+
 CMD ["twistd", "-n", "web", "--wsgi", "app.app"]
