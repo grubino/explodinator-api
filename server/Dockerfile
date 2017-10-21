@@ -11,4 +11,4 @@ COPY . /usr/src/app
 
 EXPOSE 8080
 
-CMD ["python3", "app.py"]
+CMD ["twistd", "-n", "web", "--wsgi", "app.app"]
