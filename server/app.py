@@ -13,6 +13,7 @@ import boto3
 
 ALLOWED_EXTENSIONS = {'jpg', 'jpeg'}
 UPLOAD_FOLDER = os.path.join(os.path.dirname(__file__), '.tmp')
+STATIC_FOLDER = os.path.join(os.path.dirname(__file__), 'static')
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
 app = flask.Flask(__name__)
@@ -54,7 +55,7 @@ def uploadinate():
 
     if 'file' in request.files:
 
-        f = request.files.get('file')
+        f = request.files['file']
         fname = secure_filename(f.name)
         fpath = os.path.join(app.config['UPLOAD_FOLDER'], ".".join(("-".join((str(uuid.uuid1()), fname)), "jpg")))
         with open(fpath, 'wb') as uploadinated_fp:
@@ -71,31 +72,28 @@ def uploadinations(key):
     return send_from_directory(UPLOAD_FOLDER, key)
 
 
-@app.route("/v1/explodinate", methods=['POST'])
-@require_appkey
-def explodinate():
-
-    meme_layout = extract_meme_params(request.args.get('meme_pos', ''),
-                                      request.args.get('meme_text', ''))
-    if 'explodinated.gif' in request.files:
-        f = request.files.get('explodinated.gif')
-        fname = secure_filename(f.name)
-        fpath = os.path.join(app.config['UPLOAD_FOLDER'], "-".join((str(uuid.uuid1()), fname)))
-        with open(fpath, 'w') as explodinated_fp:
-            explodinated_fp.write(f.read())
-        key = os.path.basename(fpath)
-        with open(fpath, 'rb') as f:
-            EXPLODINATION_BUCKET.upload_fileobj(f, key, ExtraArgs={'ContentType': 'image/gif'})
-        return jsonify({'key': key})
-    else:
-        return abort(400)
+@app.route("/v1/explodeTexture")
+def explode_texture():
+    return send_from_directory(STATIC_FOLDER, 'explosion.jpg')
 
 
-@app.route("/v1/explodinations", methods=['GET'])
+@app.route("/v1/explodinations", methods=['GET', 'POST'])
 def explodinations():
     return jsonify([{'key': obj.key}
                     for obj in EXPLODINATION_BUCKET.objects.all()
-                    if obj.key.endswith('.gif') and not obj.key.startswith('explodinate')])
+                    if (obj.key.endswith('.webm')) and not obj.key.startswith('explodinate')])
+
+@app.route("/v1/uploadExplodination", methods=['POST'])
+@require_appkey
+def uploadExplodinations():
+    new_explodination = request.files['explodination']
+    fname = secure_filename(new_explodination.name)
+    explodination_key = '{}.webm'.format("-".join((str(uuid.uuid1()), fname)))
+    fpath = os.path.join(app.config['UPLOAD_FOLDER'], ".".join(("-".join((str(uuid.uuid1()), fname)), "webm")))
+    with open(fpath, 'wb') as uploadinated_fp:
+        uploadinated_fp.write(new_explodination.read())
+    s3.Object('explodinations', explodination_key).put(Body=open(fpath, 'rb'), ContentType='video/webm')
+    return jsonify({'key': explodination_key})
 
 
 @app.route("/v1/privacy", methods=['GET'])

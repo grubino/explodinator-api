@@ -6,6 +6,7 @@ import Modal from 'react-bootstrap/lib/Modal';
 import ExplodinatorCube from './ExplodinatorCube';
 import Environment from './Environment';
 
+
 class ExplodinateComponent extends React.Component {
   constructor(props) {
     super(props);
@@ -53,7 +54,9 @@ class ExplodinateComponent extends React.Component {
             <Modal.Title>Explodinating</Modal.Title>
           </Modal.Header>
           <Modal.Body style={{backgroundColor: '#333'}}>
-            <ExplodinatorCube imageUrl={this.state.imageUrl}/>
+            <ExplodinatorCube imageUrl={this.state.imageUrl}
+                              explodinationUrl={`${Environment.BASE_URL}/uploadExplodination?key=${Environment.API_KEY}`}
+                              explosionUrl={`${Environment.BASE_URL}/explodeTexture`}/>
           </Modal.Body>
         </Modal>
       </div>

@@ -4,6 +4,7 @@ import React from 'react';
 import Gallery from 'react-photo-gallery';
 import Modal from 'react-bootstrap/lib/Modal';
 import { PropTypes } from 'prop-types';
+import ExplodinationComponent from 'components/ExplodinationComponent';
 
 require('styles/Explodinations.css');
 
@@ -54,6 +55,7 @@ class ExplodinationsComponent extends React.Component {
       return (
         <div>
         <Gallery photos={this.state.explodinations}
+                 ImageComponent={ExplodinationComponent}
                  onClick={(event, info) => this.setState({selectedExplodination: this.state.explodinations[info.index]})}/>
           <Modal show={this.state.selectedExplodination !== null}
                  onHide={() => this.setState({selectedExplodination: null})}>

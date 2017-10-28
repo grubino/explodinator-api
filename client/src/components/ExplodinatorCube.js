@@ -1,6 +1,7 @@
 import React from 'react';
 import * as THREE from 'three';
 import React3 from 'react-three-renderer';
+import MediaStreamRecorder from 'msr';
 
 export default class ExplodinatorCube extends React.Component {
   constructor(props, context) {
@@ -10,6 +11,12 @@ export default class ExplodinatorCube extends React.Component {
     for (let i = 0; i < 300; i++) {
       posArray[i] = Math.random() - 0.5;
     }
+
+    this.explosionStartTile = 6;
+    this.canvas = null;
+    this.mediaStream = null;
+    this.mediaRecorder = null;
+
     this.state = {
       cubeRotation: new THREE.Euler(),
       width: 0,
@@ -29,13 +36,62 @@ export default class ExplodinatorCube extends React.Component {
       trianglePositions: [],
       explosionLocation: new THREE.Vector3(0, 0, 0),
       explosionRotation: new THREE.Euler(),
-      bufferPositionAttribute: new THREE.BufferAttribute(posArray, 3)
+      isExploding: false,
+      currentExplosionTile: this.explosionStartTile,
+      currentExplosionOffset: this._getExplosionOffset(this.explosionStartTile),
+      tileDisplayDuration: 0,
+      blobUrl: null,
+      blob: null
     };
+
+    this.textureTiles = 36;
+    this.tileHorizontal = 6;
+    this.tileVertical = 6;
+    this.explosionRepeat = new THREE.Vector2(1 / this.tileHorizontal, 1 / this.tileVertical);
+    this.clock = new THREE.Clock();
 
   }
 
+  _getExplosionOffset(currentExplosionTile) {
+    const currentExplosionTileCol = currentExplosionTile % this.tileHorizontal,
+      currentExplosionTileRow = Math.floor(currentExplosionTile / this.tileHorizontal);
+    return new THREE.Vector2(
+      currentExplosionTileCol / this.tileHorizontal,
+      1.0 - currentExplosionTileRow / this.tileVertical);
+  }
+
+  _onExplodinateFinished() {
+    this.setState({isExploding: false, tileDisplayDuration: 0});
+    this.clock = new THREE.Clock();
+    this.mediaRecorder.ondataavailable = (blob) => this.setState({blobUrl: URL.createObjectURL(blob), blob: blob.slice()});
+    this.mediaRecorder.stop();
+  }
+
+  _updateTextures() {
+    const tileDisplayDuration = this.state.tileDisplayDuration + this.clock.getDelta()*1000;
+    if (tileDisplayDuration > 50) {
+      if (this.state.currentExplosionTile < this.textureTiles + this.tileHorizontal - 1) {
+        const currentExplosionTile = this.state.currentExplosionTile + 1;
+        this.setState({
+          currentExplosionTile: currentExplosionTile,
+          tileDisplayDuration: 0,
+          currentExplosionOffset: this._getExplosionOffset(currentExplosionTile)
+        });
+      } else {
+        this._onExplodinateFinished();
+      }
+    } else {
+      this.setState({tileDisplayDuration: tileDisplayDuration});
+    }
+  }
+
   _onAnimate = () => {
-    this._updateTriangles();
+    if (this.state.isExploding) {
+      if (this.state.currentExplosionTile > 10) {
+        this._updateTriangles();
+      }
+      this._updateTextures();
+    }
   };
 
   _generateTriangles() {
@@ -154,66 +210,72 @@ export default class ExplodinatorCube extends React.Component {
   }
 
   _explodinate() {
-    const accelerations = this.state.triangles.map(() => 0.03);
-    const rotationVelocities = this.state.triangles.map(() => 0.01 * Math.PI);
+    const accelerations = this.state.triangles.map(() => 0.1);
+    const rotationVelocities = this.state.triangles.map(() => 0.05 * Math.PI);
+    this.mediaStream = this.canvas.captureStream();
+    this.mediaRecorder = new MediaStreamRecorder(this.mediaStream);
+    this.mediaRecorder.start();
     this.setState({
       triangleAccelerations: accelerations,
-      triangleRotationVelocities: rotationVelocities
+      triangleRotationVelocities: rotationVelocities,
+      isExploding: true,
+      currentExplosionTile: this.explosionStartTile,
+      currentExplosionOffset: new THREE.Vector2(0, 0)
     });
   }
 
-  _reimplodinate() {
-    const accelerations = this.state.triangles.map(() => 0);
-    const velocities = this.state.triangles.map(() => 0);
-    const magnitudes = this.state.triangles.map(() => 0);
-    const positions = this.state.triangleTrajectories.map((t, i) => new THREE.Vector3(
-      t.x*magnitudes[i], t.y*magnitudes[i], t.z*magnitudes[i])
-    );
-    const rotationVelocities = this.state.triangles.map(() => 0);
-    const rotationMagnitudes = this.state.triangles.map(() => 0);
-    this.setState({
-      triangleAccelerations: accelerations,
-      triangleVelocities: velocities,
-      triangleMagnitudes: magnitudes,
-      trianglePositions: positions,
-      triangleRotationMagnitudes: rotationMagnitudes,
-      triangleRotationVelocities: rotationVelocities
+  _uploadinateExplodination() {
+    const fd = new FormData();
+    const file = new File([this.state.blob], 'explodination.webm', {
+      type: 'video/webm'
     });
+    fd.append('explodination', file);
+    fetch(this.props.explodinationUrl, {
+      method: 'POST', body: fd
+    }).catch(err => alert(err));
   }
 
   render() {
-    return (
-      <div ref={(node) => this._setWidth(node)}>
-        <button onClick={this._explodinate.bind(this)}>Explodinate</button>
-        <button onClick={this._reimplodinate.bind(this)}>Reimplodinate</button>
-        <React3 mainCamera="camera"
-                width={this.state.width}
-                height={this.state.height}
-                onAnimate={this._onAnimate}>
-          <scene>
-            <resources>
-              { this.state.triangles.map((t, i) =>
-                (<shape key={`triangle-resource-${i}`}
-                        resourceId={`triangle-resource-${i}`}>
-                  <moveTo x={t[0].x} y={t[0].y}/>
-                  <lineTo x={t[1].x} y={t[1].y}/>
-                  <lineTo x={t[2].x} y={t[2].y}/>
-                  <lineTo x={t[0].x} y={t[0].y}/>
-                </shape>)) }
-              <texture resourceId='explodinate-texture'
-                       minFilter={THREE.LinearFilter}
-                       offset={new THREE.Vector2(0.5, 0.5)}
-                       crossOrigin=''
-                       url={this.props.imageUrl} />
-            </resources>
-            <perspectiveCamera name="camera"
-                               fov={5}
-                               aspect={this.state.width / this.state.height}
-                               near={0.1}
-                               far={1000}
-                               lookAt={this.state.lookAt}
-                               position={this.state.cameraPosition}/>
-              { this.state.triangles.map((t, i) =>
+    if (this.state.blobUrl === null) {
+      return (
+        <div ref={(node) => this._setWidth(node)}>
+          <button onClick={this._explodinate.bind(this)}>Explodinate</button>
+          <React3 mainCamera="camera"
+                  canvasRef={(canvas) => this.canvas = canvas}
+                  width={this.state.width}
+                  height={this.state.height}
+                  onAnimate={this._onAnimate}>
+            <scene>
+              <resources>
+                {this.state.triangles.map((t, i) =>
+                  (<shape key={`triangle-resource-${i}`}
+                          resourceId={`triangle-resource-${i}`}>
+                    <moveTo x={t[0].x} y={t[0].y}/>
+                    <lineTo x={t[1].x} y={t[1].y}/>
+                    <lineTo x={t[2].x} y={t[2].y}/>
+                    <lineTo x={t[0].x} y={t[0].y}/>
+                  </shape>))}
+                <texture resourceId='explodinate-texture'
+                         minFilter={THREE.LinearFilter}
+                         offset={new THREE.Vector2(0.5, 0.5)}
+                         crossOrigin=''
+                         url={this.props.imageUrl}/>
+                <texture resourceId='explosion-texture'
+                         minFilter={THREE.LinearFilter}
+                         offset={this.state.currentExplosionOffset}
+                         crossOrigin=''
+                         url={this.props.explosionUrl}
+                         wrapS={THREE.RepeatWrapping} wrapT={THREE.RepeatWrapping}
+                         repeat={this.explosionRepeat}/>
+              </resources>
+              <perspectiveCamera name="camera"
+                                 fov={5}
+                                 aspect={this.state.width / this.state.height}
+                                 near={0.1}
+                                 far={1000}
+                                 lookAt={this.state.lookAt}
+                                 position={this.state.cameraPosition}/>
+              {this.state.triangles.map((t, i) =>
                 (<mesh key={`triangle-${i}`}
                        position={this.state.trianglePositions[i]}
                        rotation={this.state.triangleRotations[i]}>
@@ -222,11 +284,28 @@ export default class ExplodinatorCube extends React.Component {
                   <meshBasicMaterial color={0xaaaaaa}>
                     <textureResource resourceId='explodinate-texture'/>
                   </meshBasicMaterial>
-                </mesh>)) }
-          </scene>
-        </React3>
-      </div>
-    );
+                </mesh>))}
+              <mesh>
+                <planeBufferGeometry width={2}
+                                     height={2}
+                                     widthSegments={4}
+                                     heightSegments={4}/>
+                <meshBasicMaterial color={0xaaaaaa}>
+                  <textureResource resourceId='explosion-texture'/>
+                </meshBasicMaterial>
+              </mesh>
+            </scene>
+          </React3>
+        </div>
+      );
+    } else {
+      return (
+        <div ref={(node) => this._setWidth(node)}>
+          <button onClick={this._uploadinateExplodination.bind(this)}>Uploadinate Explodination</button>
+          <video src={this.state.blobUrl} controls/>
+        </div>
+      );
+    }
   }
 }
 

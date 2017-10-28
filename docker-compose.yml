@@ -2,31 +2,40 @@ version: "3.3"
 
 secrets:
   cert.pem:
-    file: ./nginx/cert.pem
+    file: nginx/cert.pem
   key.pem:
-    file: ./nginx/key.pem
+    file: nginx/key.pem
   aws_creds:
-    file: ~/.aws/credentials
+    file: .aws/credentials
 
 services:
   explodinator-api:
-    build:
-      context: ./server
-      dockerfile: Dockerfile
+    image: bibilthaysose/explodinator-api
     secrets:
       - aws_creds
     ports:
       - "8080"
+    deploy:
+      replicas: 2
+      update_config:
+        parallelism: 1
+        delay: 10s
+      restart_policy:
+        condition: on-failure
   explodinator-proxy:
-    build: 
-      context: .
-      dockerfile: Dockerfile
+    image: bibilthaysose/explodinator-proxy
+    network_mode: "service:explodinator-api"
     environment:
       NODE_ENV: ${NODE_ENV}
     secrets:
       - cert.pem
       - key.pem
-    links:
-      - explodinator-api
     ports:
       - "443:443"
+    deploy:
+      replicas: 2
+      update_config:
+        parallelism: 1
+        delay: 10s
+      restart_policy:
+        condition: on-failure
