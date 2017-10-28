@@ -81,7 +81,7 @@ def explode_texture():
 def explodinations():
     return jsonify([{'key': obj.key}
                     for obj in EXPLODINATION_BUCKET.objects.all()
-                    if (obj.key.endswith('.webm')) and not obj.key.startswith('explodinate')])
+                    if obj.key.endswith('.webm') and not obj.key.startswith('explodinate')])
 
 @app.route("/v1/uploadExplodination", methods=['POST'])
 @require_appkey

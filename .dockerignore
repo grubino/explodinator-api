@@ -2,3 +2,4 @@ Dockerfile
 *~
 ExplodinatorMarketplace.xml
 client/node_modules/
+server/
