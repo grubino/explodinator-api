@@ -2,6 +2,7 @@ import React from 'react';
 import * as THREE from 'three';
 import React3 from 'react-three-renderer';
 import MediaStreamRecorder from 'msr';
+import {PropTypes} from 'prop-types';
 
 export default class ExplodinatorCube extends React.Component {
   constructor(props, context) {
@@ -232,7 +233,7 @@ export default class ExplodinatorCube extends React.Component {
     fd.append('explodination', file);
     fetch(this.props.explodinationUrl, {
       method: 'POST', body: fd
-    }).catch(err => alert(err));
+    }).then(this.props.onUploadCallback).catch(err => alert(err));
   }
 
   render() {
@@ -308,4 +309,13 @@ export default class ExplodinatorCube extends React.Component {
     }
   }
 }
+
+// Uncomment properties you need
+ExplodinatorCube.propTypes = {
+  uploadCallback: PropTypes.func,
+  imageUrl: PropTypes.string,
+  explodinationUrl: PropTypes.string,
+  explosionUrl: PropTypes.string
+};
+// ExplodinateComponent.defaultProps = {};
 

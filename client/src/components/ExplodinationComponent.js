@@ -22,7 +22,7 @@ class ExplodinationComponent extends PureComponent {
         style={onClick ? { ...imgStyle, ...imgWithClick } : imgStyle}
         {...photo}
         onClick={onClick ? this.handleClick : null}
-        controls
+        autoplay="true" loop controls
       />
     );
   }

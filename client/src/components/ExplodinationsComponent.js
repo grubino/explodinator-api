@@ -31,20 +31,16 @@ class ExplodinationsComponent extends React.Component {
       .then(res => res.json())
       .then(resJson => {
         resJson.forEach(item => {
-          let image = new Image();
-          image.onload = () => {
-            let newImages = this.state.explodinations.slice();
-            newImages.push({
-              src: `${s3UrlBase}/${item.key}`,
-              key: item.key,
-              width: image.width,
-              height: image.height
-            });
-            this.setState({
-              explodinations: newImages
-            });
-          };
-          image.src = `${s3UrlBase}/${item.key}`;
+          let newImages = this.state.explodinations.slice();
+          newImages.push({
+            src: `${s3UrlBase}/${item.key}`,
+            key: item.key,
+            width: 300,
+            height: 300
+          });
+          this.setState({
+            explodinations: newImages
+          });
         });
       }).catch(this._handleError);
   }
@@ -65,7 +61,8 @@ class ExplodinationsComponent extends React.Component {
               </Modal.Title>
             </Modal.Header>
             <Modal.Body style={{backgroundColor: '#333'}}>
-              <img width="100%" src={this.state.selectedExplodination && this.state.selectedExplodination.src}/>
+              <video width="100%"
+                     src={this.state.selectedExplodination && `${this.props.s3UrlBase}/${this.state.selectedExplodination.key}`} controls/>
             </Modal.Body>
           </Modal>
         </div>

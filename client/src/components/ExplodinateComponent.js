@@ -55,6 +55,7 @@ class ExplodinateComponent extends React.Component {
           </Modal.Header>
           <Modal.Body style={{backgroundColor: '#333'}}>
             <ExplodinatorCube imageUrl={this.state.imageUrl}
+                              uploadCallback={() => this.setState({showModal: false})}
                               explodinationUrl={`${Environment.BASE_URL}/uploadExplodination?key=${Environment.API_KEY}`}
                               explosionUrl={`${Environment.BASE_URL}/explodeTexture`}/>
           </Modal.Body>

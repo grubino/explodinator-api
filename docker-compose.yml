@@ -13,10 +13,12 @@ services:
     image: bibilthaysose/explodinator-api
     secrets:
       - aws_creds
-    ports:
-      - "8080"
+    networks:
+      backend:
+        aliases:
+          - explodinator-api
     deploy:
-      replicas: 2
+      replicas: 1
       update_config:
         parallelism: 1
         delay: 10s
@@ -24,18 +26,26 @@ services:
         condition: on-failure
   explodinator-proxy:
     image: bibilthaysose/explodinator-proxy
-    network_mode: "service:explodinator-api"
     environment:
       NODE_ENV: ${NODE_ENV}
     secrets:
       - cert.pem
       - key.pem
     ports:
+      - "80:80"
       - "443:443"
+    networks:
+      - backend
     deploy:
-      replicas: 2
+      replicas: 1
+      placement:
+        constraints: [node.hostname==explodinator-vm]
       update_config:
         parallelism: 1
         delay: 10s
       restart_policy:
         condition: on-failure
+
+networks:
+  backend:
+    driver: overlay
