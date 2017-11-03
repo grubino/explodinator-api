@@ -101,8 +101,8 @@ export default class ExplodinatorCube extends React.Component {
       return x < min ? min : (x > max ? max : x);
     }
 
-    const ringRadius = 0.01, ringSize = 21,
-      ringCount = 6, rings = new Array(ringCount),
+    const ringRadius = 0.01, ringSize = 33,
+      ringCount = 10, rings = new Array(ringCount),
       centerX = this.state.clickPosition[0],
       centerY = this.state.clickPosition[1];
 
@@ -312,7 +312,7 @@ export default class ExplodinatorCube extends React.Component {
 
 // Uncomment properties you need
 ExplodinatorCube.propTypes = {
-  uploadCallback: PropTypes.func,
+  onUploadCallback: PropTypes.func,
   imageUrl: PropTypes.string,
   explodinationUrl: PropTypes.string,
   explosionUrl: PropTypes.string

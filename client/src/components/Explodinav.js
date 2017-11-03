@@ -10,8 +10,9 @@ import NavItem from 'react-bootstrap/lib/NavItem';
 export default class Explodinav extends React.Component {
   constructor(props) {
     super(props);
-    this.cb = props.aboutCallback;
+    this.aboutCb = props.aboutCallback;
   }
+
   render() {
     return (
       <div>
@@ -23,8 +24,9 @@ export default class Explodinav extends React.Component {
             <Navbar.Toggle/>
           </Navbar.Header>
           <Navbar.Collapse>
-            <Nav onSelect={this.cb} pullRight>
-              <NavItem eventKey={1} href="#">About</NavItem>
+            <Nav pullRight>
+              <NavItem eventKey={2} href="#">How It Works</NavItem>
+              <NavItem eventKey={1} onClick={this.aboutCb} href="#">About</NavItem>
             </Nav>
           </Navbar.Collapse>
         </Navbar>

@@ -9,6 +9,14 @@ secrets:
     file: .aws/credentials
 
 services:
+  mongo:
+    image: mongo
+    networks:
+      backend:
+        aliases:
+          - mongodb
+    deploy:
+      replicas: 3      
   explodinator-api:
     image: bibilthaysose/explodinator-api
     secrets:
@@ -19,6 +27,8 @@ services:
           - explodinator-api
     deploy:
       replicas: 1
+      placement:
+        constraints: [node.hostname==explodinator-vm]
       update_config:
         parallelism: 1
         delay: 10s

@@ -6,3 +6,6 @@ boto3
 flask_cors
 configparser
 twisted
+flask-security
+flask-mongoengine
+bcrypt
