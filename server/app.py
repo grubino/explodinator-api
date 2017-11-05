@@ -5,7 +5,7 @@ from datetime import datetime
 
 import boto3
 import flask
-from flask import request, abort, jsonify
+from flask import request, abort, jsonify, redirect
 from flask.helpers import send_from_directory, url_for
 from flask.wrappers import Response
 from flask_cors import CORS
@@ -42,10 +42,11 @@ app.config['MONGODB_SETTINGS'] = {
 
 db = MongoEngine(app)
 
-app.config['MAIL_SERVER'] = 'explodinator.org'
-app.config['MAIL_PORT'] = 587
-app.config['MAIL_USE_TLS'] = True
-app.config['MAIL_USERNAME'] = 'admin@explodintor.org'
+app.config['MAIL_SERVER'] = 'smtp.gmail.com'
+app.config['MAIL_PORT'] = 465
+app.config['MAIL_USE_TLS'] = False
+app.config['MAIL_USE_SSL'] = True
+app.config['MAIL_USERNAME'] = 'greg@luzene.com'
 app.config['MAIL_PASSWORD'] = os.environ.get('MAIL_PASSWORD')
 
 mail = Mail(app)
@@ -119,7 +120,7 @@ Hello {email},
 
 You've been registered at Explodinator.org!  Please click on the link below to confirm your account:
 
-{confirm_link}
+{host}{confirm_link}
 
 Happy Explodinating!
 The Explodinator Family
@@ -131,21 +132,26 @@ def register():
     body = request.json
     body['active'] = False
     new_user = user_datastore.create_user(**body)
-    confirm_link = url_for('confirm', user_id=new_user.id)
+    redirect_url = request.args.get('redirect')
+    confirm_link = '/v1/confirm/{}?redirect={}'.format(new_user.id, redirect_url)
     confirmation = Message('Welcome to Explodinator!',
                            [body['email']],
                            email_body.format(email=new_user.email,
+                                             host=request.host_url.rstrip('/'),
                                              confirm_link=confirm_link),
                            sender='support@explodinator.org')
     mail.send(confirmation)
-    return None, 204
+    return Response(status=204)
 
 
 @app.route('/v1/confirm/<user_id>')
 def confirm(user_id):
     user = User.objects.get_or_404(id=user_id)
     user.confirmed_at = datetime.utcnow()
-    return None, 204
+    user.active = True
+    user.save()
+    login_user(user)
+    return redirect('{}'.format(request.args.get('redirect')))
 
 
 @app.route("/v1/uploadinate", methods=['POST'])
@@ -181,8 +187,18 @@ def explodinations():
 
 @app.route("/v1/explodinations/<explodination_id>")
 def explodination(explodination_id):
+    affiliate = request.args.get('affiliate_id', None)
     explodination = Explodination.objects.get_or_404(id=explodination_id)
     return Response(explodination.explodination.read(), 200, content_type=explodination.explodination.content_type)
+
+
+@app.route("/v1/explodinations/<explodination_id>/like")
+@login_required
+def like(explodination_id):
+    explodination = Explodination.objects.get_or_404(id=explodination_id)
+    explodination.likes.append(current_user.id)
+    explodination.save()
+    return Response(status=204)
 
 
 @app.route("/v1/uploadExplodination", methods=['POST'])

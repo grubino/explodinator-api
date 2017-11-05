@@ -242,7 +242,6 @@ export default class ExplodinatorCube extends React.Component {
     if (this.state.blobUrl === null) {
       return (
         <div ref={(node) => this._setWidth(node)}>
-          <Button raised onClick={this._explodinate.bind(this)}>Explodinate</Button>
           <React3 mainCamera="camera"
                   canvasRef={(canvas) => this.canvas = canvas}
                   width={this.state.width}
@@ -299,13 +298,14 @@ export default class ExplodinatorCube extends React.Component {
               </mesh>
             </scene>
           </React3>
+          <Button raised onClick={this._explodinate.bind(this)}>Explodinate</Button>
         </div>
       );
     } else {
       return (
         <div ref={(node) => this._setWidth(node)}>
-          <button onClick={this._uploadinateExplodination.bind(this)}>Uploadinate Explodination</button>
           <video src={this.state.blobUrl} controls/>
+          <Button raised onClick={this._uploadinateExplodination.bind(this)}>Uploadinate Explodination</Button>
         </div>
       );
     }

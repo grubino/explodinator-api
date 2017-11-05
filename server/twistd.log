@@ -1,0 +1,4 @@
+2017-10-20T20:39:41-0400 [twisted.scripts._twistd_unix.UnixAppLogger#info] twistd 17.9.0 (/Users/gregrubino/explodinator-api-env/bin/python3.6 3.6.2) starting up.
+2017-10-20T20:39:41-0400 [twisted.scripts._twistd_unix.UnixAppLogger#info] reactor class: twisted.internet.selectreactor.SelectReactor.
+2017-10-20T20:39:41-0400 [-] Site starting on 8080
+2017-10-20T20:39:41-0400 [twisted.web.server.Site#info] Starting factory <twisted.web.server.Site object at 0x10f485d30>

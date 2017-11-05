@@ -76,20 +76,25 @@ export default class Explodinav extends React.Component {
   handleProfileMenuClick = (event) => this.setState({profileMenuAnchor: event.currentTarget, profileMenuOpen: true});
   handleProfileMenuClose = () => this.setState({profileMenuOpen: false});
 
+  _loggedInAvatarMenu(avatar) {
+    return (
+      <div>
+        <IconButton onClick={this.handleProfileMenuClick}
+                    aria-owns={this.state.profileMenuOpen ? 'profile-menu' : null}
+                    aria-haspopup="true">
+          {avatar}
+        </IconButton>
+        {ProfileMenu(this.state.user,
+          this.state.profileMenuAnchor,
+          this.state.profileMenuOpen,
+          this.handleProfileMenuClose, this.profileMenuCallbacks)}
+      </div>);
+  }
   avatarMenu() {
     if (this.props.user) {
-      return (
-        <div>
-          <IconButton onClick={this.handleProfileMenuClick}
-                      aria-owns={this.state.profileMenuOpen ? 'profile-menu' : null}
-                      aria-haspopup="true">
-            <Avatar src={this.props.user.avatar} alt={this.props.user.email}/>
-          </IconButton>
-          {ProfileMenu(this.state.user,
-            this.state.profileMenuAnchor,
-            this.state.profileMenuOpen,
-            this.handleProfileMenuClose, this.profileMenuCallbacks)}
-        </div>);
+      const avatar = this.props.user.avatar ?
+        <Avatar src={this.props.user.avatar} alt={this.props.user.email}/> : <Avatar>?</Avatar>;
+      return this._loggedInAvatarMenu(avatar);
     } else {
       return (
         <div>

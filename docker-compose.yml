@@ -74,3 +74,4 @@ services:
         constraints: [node.hostname==explodinator-1]
       restart_policy:
         condition: on-failure
+  

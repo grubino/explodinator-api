@@ -216,7 +216,7 @@ class AppComponent extends React.Component {
   };
   _handleRegister = () => {
     const loginInfo = this.state.loginInfo;
-    fetch(`${Environment.BASE_URL}/register`, {
+    fetch(`${Environment.BASE_URL}/register?redirect=${window.location.href}`, {
       method: 'POST',
       credentials: 'include',
       body: JSON.stringify(loginInfo),
