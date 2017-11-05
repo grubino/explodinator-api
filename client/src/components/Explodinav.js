@@ -2,34 +2,122 @@
  * Created by gregrubino on 6/3/17.
  */
 import React from 'react';
-import Navbar from 'react-bootstrap/lib/Navbar';
-import Nav from 'react-bootstrap/lib/Nav';
-import NavItem from 'react-bootstrap/lib/NavItem';
+import AppBar from 'material-ui/AppBar';
+import Toolbar from 'material-ui/Toolbar';
+import Typography from 'material-ui/Typography';
+import IconButton from 'material-ui/IconButton';
+import Menu, {MenuItem} from 'material-ui/Menu';
+import Avatar from 'material-ui/Avatar';
+import Grid from 'material-ui/Grid';
+
+const ProfileMenu = (user, anchorEl, isOpen, handleClose, callbacks) => {
+  return (
+    <Menu id="profile-menu"
+          anchorEl={anchorEl}
+          open={isOpen}
+          onRequestClose={handleClose}>
+      <MenuItem onClick={callbacks.profile}>Profile</MenuItem>
+      <MenuItem onClick={callbacks.logout}>Logout</MenuItem>
+    </Menu>
+  );
+};
+
+const LoginMenu = (anchorEl, isOpen, handleClose, callbacks) => {
+  return (
+    <Menu id="profile-menu"
+          anchorEl={anchorEl}
+          open={isOpen}
+          onRequestClose={handleClose}>
+      <MenuItem onClick={callbacks.about}>About</MenuItem>
+      <MenuItem onClick={callbacks.login}>Login</MenuItem>
+      <MenuItem onClick={callbacks.register}>Register</MenuItem>
+    </Menu>
+  );
+};
 
 
 export default class Explodinav extends React.Component {
+  state = {
+    openDrawer: false,
+    profileMenuAnchor: null,
+    profileMenuOpen: false
+  };
+  profileMenuCallbacks = {
+    profile: () => {
+      this.handleProfileMenuClose();
+    },
+    logout: () => {
+      this.handleNavCallback(this.props.logoutCallback);
+      this.handleProfileMenuClose();
+    }
+  };
+  loginMenuCallbacks = {
+    about: () => {
+      this.handleNavCallback(this.props.aboutCallback);
+      this.handleProfileMenuClose();
+    },
+    login: () => {
+      this.handleNavCallback(this.props.loginCallback);
+      this.handleProfileMenuClose();
+    },
+    register: () => {
+      this.handleNavCallback(this.props.registerCallback);
+      this.handleProfileMenuClose();
+    }
+  };
   constructor(props) {
     super(props);
-    this.aboutCb = props.aboutCallback;
+  }
+
+  handleNavCallback = (fn) => {
+    fn();
+  };
+
+  handleProfileMenuClick = (event) => this.setState({profileMenuAnchor: event.currentTarget, profileMenuOpen: true});
+  handleProfileMenuClose = () => this.setState({profileMenuOpen: false});
+
+  avatarMenu() {
+    if (this.props.user) {
+      return (
+        <div>
+          <IconButton onClick={this.handleProfileMenuClick}
+                      aria-owns={this.state.profileMenuOpen ? 'profile-menu' : null}
+                      aria-haspopup="true">
+            <Avatar src={this.props.user.avatar} alt={this.props.user.email}/>
+          </IconButton>
+          {ProfileMenu(this.state.user,
+            this.state.profileMenuAnchor,
+            this.state.profileMenuOpen,
+            this.handleProfileMenuClose, this.profileMenuCallbacks)}
+        </div>);
+    } else {
+      return (
+        <div>
+          <IconButton onClick={this.handleProfileMenuClick}
+                      aria-owns={this.state.profileMenuOpen ? 'profile-menu' : null}
+                      aria-haspopup="true">
+            <Avatar>?</Avatar>
+          </IconButton>
+          {LoginMenu(this.state.profileMenuAnchor,
+            this.state.profileMenuOpen,
+            this.handleProfileMenuClose, this.loginMenuCallbacks)}
+        </div>);
+    }
   }
 
   render() {
     return (
       <div>
-        <Navbar inverse collapseOnSelect>
-          <Navbar.Header>
-            <Navbar.Brand>
-              <a href="#">EXPLODINATOR!</a>
-            </Navbar.Brand>
-            <Navbar.Toggle/>
-          </Navbar.Header>
-          <Navbar.Collapse>
-            <Nav pullRight>
-              <NavItem eventKey={2} href="#">How It Works</NavItem>
-              <NavItem eventKey={1} onClick={this.aboutCb} href="#">About</NavItem>
-            </Nav>
-          </Navbar.Collapse>
-        </Navbar>
+        <AppBar position="static">
+          <Toolbar>
+            <Typography type="title">
+              EXPLODINATOR!
+            </Typography>
+            <Grid container alignItems="center" direction="row" justify="flex-end">
+              {this.avatarMenu()}
+            </Grid>
+          </Toolbar>
+        </AppBar>
       </div>
     );
   }

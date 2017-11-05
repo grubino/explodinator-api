@@ -1,0 +1,2 @@
+mail._domainkey	IN	TXT	( "v=DKIM1; k=rsa; "
+	  "p=MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQCj6B1Xi2geLNdbIh1bLo16PcGhc8mJQzThRSiOUtb7EKEu1A3b3/wtVeyFY7YfK0xhEJh3G5231xMgPxlxl2tcXVv6B2UFC3tF9sdSGJP/bqWNC/RHFVnYUqlNXLkv5UvXF+vwoi3nU480znB8ooITrYZ6NF9d1yPt9p0Jox6beQIDAQAB" )  ; ----- DKIM key mail for explodinator.org

@@ -27,11 +27,14 @@ class ExplodinateComponent extends React.Component {
     this.eventHandlers =  {
       init: (dropzone) => {
         this.dz = dropzone;
+        this.dz.options.withCredentials = true;
       }, success: (file, response) => {
         this.setState({
           showModal: true,
           imageUrl: `${Environment.BASE_URL}/uploadinations/${response['uploaded_key']}?key=${Environment.API_KEY}`
         });
+      }, error: () => {
+        this.dz.removeAllFiles(true);
       }
     };
     this.state = {

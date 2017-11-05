@@ -3,6 +3,7 @@ import * as THREE from 'three';
 import React3 from 'react-three-renderer';
 import MediaStreamRecorder from 'msr';
 import {PropTypes} from 'prop-types';
+import Button from 'material-ui/Button';
 
 export default class ExplodinatorCube extends React.Component {
   constructor(props, context) {
@@ -232,6 +233,7 @@ export default class ExplodinatorCube extends React.Component {
     });
     fd.append('explodination', file);
     fetch(this.props.explodinationUrl, {
+      credentials: 'include',
       method: 'POST', body: fd
     }).then(this.props.onUploadCallback).catch(err => alert(err));
   }
@@ -240,7 +242,7 @@ export default class ExplodinatorCube extends React.Component {
     if (this.state.blobUrl === null) {
       return (
         <div ref={(node) => this._setWidth(node)}>
-          <button onClick={this._explodinate.bind(this)}>Explodinate</button>
+          <Button raised onClick={this._explodinate.bind(this)}>Explodinate</Button>
           <React3 mainCamera="camera"
                   canvasRef={(canvas) => this.canvas = canvas}
                   width={this.state.width}

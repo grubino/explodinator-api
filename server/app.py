@@ -1,24 +1,24 @@
 import configparser
 import os
 import uuid
+from datetime import datetime
 
+import boto3
 import flask
+from flask import request, abort, jsonify
+from flask.helpers import send_from_directory, url_for
 from flask.wrappers import Response
 from flask_cors import CORS
-from flask import request, abort, jsonify
-from flask.helpers import send_from_directory
 from flask_login.utils import current_user
-from flask_mongoengine import MongoEngine, Document
+from flask_mail import Mail, Message
+from flask_mongoengine import MongoEngine
+from flask_security import login_required
 from flask_security.core import RoleMixin, UserMixin, Security
 from flask_security.datastore import MongoEngineUserDatastore
-from flask_security.utils import verify_and_update_password, login_user
-from flask_security import login_required
-from mongoengine.fields import StringField, BooleanField, DateTimeField, ReferenceField, ListField, URLField
+from flask_security.utils import verify_and_update_password, login_user, logout_user
 from werkzeug.utils import secure_filename
 
 from endpoints.util import create_util_endpoints
-from interceptors import require_appkey
-import boto3
 
 ALLOWED_EXTENSIONS = {'jpg', 'jpeg'}
 UPLOAD_FOLDER = os.path.join(os.path.dirname(__file__), '.tmp')
@@ -26,18 +26,29 @@ STATIC_FOLDER = os.path.join(os.path.dirname(__file__), 'static')
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
 app = flask.Flask(__name__)
-CORS(app)
+CORS(app, supports_credentials=True)
 
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
+app.config['SESSION_COOKIE_NAME'] = 'explodinator_session'
 app.config['SECRET_KEY'] = 'supers3cr3t'
 app.config['SECURITY_PASSWORD_SALT'] = 's41t0fth334rth'
 
-app.config['MONGODB_DB'] = os.environ.get('MONGODB_DB', 'explodinator')
-app.config['MONGODB_HOST'] = os.environ.get('MONGODB_HOST', 'localhost')
-app.config['MONGODB_PORT'] = os.environ.get('MONGODB_PORT', 27017)
+app.config['MONGODB_SETTINGS'] = {
+    'host': 'mongodb://{}:{}/{}'.format(os.environ.get('MONGODB_HOST', 'localhost'),
+                                        os.environ.get('MONGODB_PORT', 27017),
+                                        os.environ.get('MONGODB_DB', 'explodinator'))
+}
 
 db = MongoEngine(app)
+
+app.config['MAIL_SERVER'] = 'explodinator.org'
+app.config['MAIL_PORT'] = 587
+app.config['MAIL_USE_TLS'] = True
+app.config['MAIL_USERNAME'] = 'admin@explodintor.org'
+app.config['MAIL_PASSWORD'] = os.environ.get('MAIL_PASSWORD')
+
+mail = Mail(app)
 
 
 class Role(db.Document, RoleMixin):
@@ -47,28 +58,29 @@ class Role(db.Document, RoleMixin):
 
 class User(db.Document, UserMixin):
     avatar = db.URLField()
-    email = db.StringField(max_length=255)
+    email = db.StringField(max_length=255, unique=True)
     password = db.StringField(max_length=255)
-    active = db.BooleanField(default=True)
+    active = db.BooleanField(default=False)
     confirmed_at = db.DateTimeField()
-    roles = db.ListField(ReferenceField(Role), default=[])
+    roles = db.ListField(db.ReferenceField(Role), default=[])
 
 
 class Explodination(db.Document):
     explodination = db.FileField()
     user = db.ReferenceField(User)
-    likes = db.ListField(ReferenceField(User), default=[])
-    shares = db.ListField(ReferenceField(User), default=[])
+    likes = db.ListField(db.ReferenceField(User), default=[])
+    shares = db.ListField(db.ReferenceField(User), default=[])
 
 
 user_datastore = MongoEngineUserDatastore(db, User, Role)
 security = Security(app, user_datastore)
-security.unauthorized_handler(lambda x: abort(401))
+app.login_manager.unauthorized_handler(lambda: abort(401))
 
 
 @app.before_first_request
 def create_user():
-    user_datastore.create_user(email='admin@explodinator.org', password='passw0rd')
+    if not user_datastore.find_user(email='admin@explodinator.org'):
+        user_datastore.create_user(email='admin@explodinator.org', password='passw0rd')
 
 
 if os.path.exists('/run/secrets/aws_creds'):
@@ -81,7 +93,6 @@ else:
 
 EXPLODINATION_BUCKET = s3.Bucket('explodinations')
 
-
 create_util_endpoints(app)
 
 
@@ -89,20 +100,58 @@ create_util_endpoints(app)
 def login():
     body = request.json
     user = user_datastore.get_user(body.get('email', ''))
-    if verify_and_update_password(body.get('password', ''), user):
-        login_user(user)
-        del(user.password)
+    if user is not None and verify_and_update_password(body.get('password', ''), user):
+        login_user(user, True)
+        del (user.password)
         return flask.jsonify(user)
     else:
         return abort(401)
 
 
+@app.route('/v1/logout', methods=['GET'])
+def logout():
+    logout_user()
+    return Response(status=204)
+
+
+email_body = '''
+Hello {email},
+
+You've been registered at Explodinator.org!  Please click on the link below to confirm your account:
+
+{confirm_link}
+
+Happy Explodinating!
+The Explodinator Family
+'''
+
+
+@app.route('/v1/register', methods=['POST'])
+def register():
+    body = request.json
+    body['active'] = False
+    new_user = user_datastore.create_user(**body)
+    confirm_link = url_for('confirm', user_id=new_user.id)
+    confirmation = Message('Welcome to Explodinator!',
+                           [body['email']],
+                           email_body.format(email=new_user.email,
+                                             confirm_link=confirm_link),
+                           sender='support@explodinator.org')
+    mail.send(confirmation)
+    return None, 204
+
+
+@app.route('/v1/confirm/<user_id>')
+def confirm(user_id):
+    user = User.objects.get_or_404(id=user_id)
+    user.confirmed_at = datetime.utcnow()
+    return None, 204
+
+
 @app.route("/v1/uploadinate", methods=['POST'])
 @login_required
 def uploadinate():
-
     if 'file' in request.files:
-
         f = request.files['file']
         fname = secure_filename(f.name)
         fpath = os.path.join(app.config['UPLOAD_FOLDER'], ".".join(("-".join((str(uuid.uuid1()), fname)), "jpg")))
@@ -116,13 +165,11 @@ def uploadinate():
 
 
 @app.route("/v1/uploadinations/<key>", methods=['GET'])
-@login_required
 def uploadinations(key):
     return send_from_directory(UPLOAD_FOLDER, key)
 
 
 @app.route("/v1/explodeTexture")
-@login_required
 def explode_texture():
     return send_from_directory(STATIC_FOLDER, 'explosion.jpg')
 
@@ -131,10 +178,12 @@ def explode_texture():
 def explodinations():
     return jsonify(Explodination.objects.paginate(page=1, per_page=10).items)
 
+
 @app.route("/v1/explodinations/<explodination_id>")
 def explodination(explodination_id):
     explodination = Explodination.objects.get_or_404(id=explodination_id)
     return Response(explodination.explodination.read(), 200, content_type=explodination.explodination.content_type)
+
 
 @app.route("/v1/uploadExplodination", methods=['POST'])
 @login_required

@@ -8,30 +8,54 @@ secrets:
   aws_creds:
     file: .aws/credentials
 
+volumes:
+  mongo-1-data:
+  mongo-2-data:
+  mongo-3-data:
+
 services:
-  mongo:
-    image: mongo
-    networks:
-      backend:
-        aliases:
-          - mongodb
+  mongo-1:
+    image: mongo:3.4
+    command: ["mongod", "--replSet", "exploderSet"]
+    ports:
+      - 27017
     deploy:
-      replicas: 3      
+      placement:
+        constraints: [node.hostname==explodinator-1]
+    volumes:
+      - mongo-1-data:/data/db
+  mongo-2:
+    image: mongo:3.4
+    command: ["mongod", "--replSet", "exploderSet"]
+    ports:
+      - 27017
+    deploy:
+      placement:
+        constraints: [node.hostname==explodinator-2]
+    volumes:
+      - mongo-2-data:/data/db
+  mongo-3:
+    image: mongo:3.4
+    command: ["mongod", "--replSet", "exploderSet"]
+    ports:
+      - 27017
+    deploy:
+      placement:
+        constraints: [node.hostname==explodinator-3]
+    volumes:
+      - mongo-3-data:/data/db
   explodinator-api:
     image: bibilthaysose/explodinator-api
+    environment:
+      MONGODB_HOST: mongo-1
     secrets:
       - aws_creds
-    networks:
-      backend:
-        aliases:
-          - explodinator-api
+    ports:
+      - 8080
     deploy:
       replicas: 1
       placement:
-        constraints: [node.hostname==explodinator-vm]
-      update_config:
-        parallelism: 1
-        delay: 10s
+        constraints: [node.hostname==explodinator-1]
       restart_policy:
         condition: on-failure
   explodinator-proxy:
@@ -44,18 +68,9 @@ services:
     ports:
       - "80:80"
       - "443:443"
-    networks:
-      - backend
     deploy:
       replicas: 1
       placement:
-        constraints: [node.hostname==explodinator-vm]
-      update_config:
-        parallelism: 1
-        delay: 10s
+        constraints: [node.hostname==explodinator-1]
       restart_policy:
         condition: on-failure
-
-networks:
-  backend:
-    driver: overlay
