@@ -23,7 +23,7 @@ class ExplodinationsComponent extends React.Component {
     let explodinations = this.props.explodinations;
     if (explodinations.length > 0) {
       return (
-        <div style={{flexGrow: 1, marginTop: 10}}>
+        <div style={{flexGrow: 1, marginTop: 70}}>
           <Grid container spacing={16}>
             {this.props.explodinations.map((explodination, i) =>
               <Grid key={i} item xs={12} md={6}>

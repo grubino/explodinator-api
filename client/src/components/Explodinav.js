@@ -43,7 +43,8 @@ export default class Explodinav extends React.Component {
     profileMenuOpen: false
   };
   profileMenuCallbacks = {
-    profile: () => {
+    about: () => {
+      this.handleNavCallback(this.props.aboutCallback);
       this.handleProfileMenuClose();
     },
     logout: () => {
@@ -93,7 +94,7 @@ export default class Explodinav extends React.Component {
   avatarMenu() {
     if (this.props.user) {
       const avatar = this.props.user.avatar ?
-        <Avatar src={this.props.user.avatar} alt={this.props.user.email}/> : <Avatar>?</Avatar>;
+        <Avatar src={this.props.user.avatar} alt={this.props.user.email}/> : <Avatar>{this.props.user.email[0]}</Avatar>;
       return this._loggedInAvatarMenu(avatar);
     } else {
       return (
@@ -113,7 +114,7 @@ export default class Explodinav extends React.Component {
   render() {
     return (
       <div>
-        <AppBar position="static">
+        <AppBar position="fixed">
           <Toolbar>
             <Typography type="title">
               EXPLODINATOR!

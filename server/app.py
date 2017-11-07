@@ -1,6 +1,7 @@
 import configparser
 import os
 import uuid
+from copy import copy
 from datetime import datetime
 
 import boto3
@@ -107,6 +108,15 @@ def login():
         return flask.jsonify(user)
     else:
         return abort(401)
+
+
+@app.route('/v1/me', methods=['GET'])
+def me():
+    if current_user is not None and current_user.is_active:
+        user = copy(current_user)
+        return flask.jsonify(user)
+    else:
+        abort(401)
 
 
 @app.route('/v1/logout', methods=['GET'])

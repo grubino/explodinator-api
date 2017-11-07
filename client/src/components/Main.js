@@ -131,9 +131,20 @@ const RegisterDialog = (show, closeModals, handleChange, registerAction, showPas
   </Dialog>);
 };
 
+const Explodinate = (isLoggedIn) => {
+  if (isLoggedIn) {
+    return (<ExplodinateComponent/>);
+  } else {
+    return (<div/>);
+  }
+};
+
 class AppComponent extends React.Component {
   constructor(props) {
     super(props);
+
+    this.apiUrlBase = Environment.BASE_URL;
+
     this.state = {
       showModal: false,
       explodinations: [],
@@ -145,8 +156,20 @@ class AppComponent extends React.Component {
       showPassword: false,
       registering: false
     };
-    this.reloadInterval = setInterval(() => this._loadinate(), 3000)
+    this.reloadInterval = setInterval(() => this._loadinate(), 3000);
   }
+
+  componentDidMount() {
+    this._getMyUser();
+  }
+
+  _getMyUser = () => {
+    fetch(`${this.apiUrlBase}/me`, {
+      credentials: 'include'
+    }).then(res => res.json())
+      .then(resJson => this.setState({user: resJson}))
+      .catch(err => this._handleError(err));
+  };
 
   _handleError = (err) => {
     this.setState({notification: `${err}`, notificationOpen: true});
@@ -154,9 +177,7 @@ class AppComponent extends React.Component {
 
   _loadinate() {
 
-    let apiUrlBase = Environment.BASE_URL;
-
-    fetch(`${apiUrlBase}/explodinations`, {
+    fetch(`${this.apiUrlBase}/explodinations`, {
       credentials: 'include'
     }).then(res => res.json())
       .then(resJson => {
@@ -165,7 +186,7 @@ class AppComponent extends React.Component {
         resJson.forEach(item => {
           if (!newImages.find((im) => im.key === item._id.$oid)) {
             newImages.push({
-              src: `${apiUrlBase}/explodinations/${item._id.$oid}`,
+              src: `${this.apiUrlBase}/explodinations/${item._id.$oid}`,
               key: item._id.$oid,
               width: '100%',
               height: 'auto'
@@ -196,7 +217,7 @@ class AppComponent extends React.Component {
   };
   _handleLogin = () => {
     const loginInfo = this.state.loginInfo;
-    fetch(`${Environment.BASE_URL}/login`, {
+    fetch(`${this.apiUrlBase}/login`, {
       method: 'POST',
       credentials: 'include',
       body: JSON.stringify(loginInfo),
@@ -208,7 +229,7 @@ class AppComponent extends React.Component {
       if (res.status != 200) {
         this._handleError('Login Failed');
       }
-      this.setState({user: res.json});
+      this._getMyUser();
       this._closeModals();
     }).catch(err => {
       this._handleError(err);
@@ -267,7 +288,7 @@ class AppComponent extends React.Component {
             this._handleRegister,
             this.state.showPassword,
             this._toggleShowPassword)}
-          <ExplodinateComponent/>
+          {Explodinate(this.state.user !== null)}
           <ExplodinationsComponent explodinations={this.state.explodinations}
                                    s3UrlBase={Environment.S3_BASE}/>
           <NotificationSystem ref="notificationSystem" allowHTML={false}/>
