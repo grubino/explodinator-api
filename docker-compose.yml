@@ -1,10 +1,6 @@
 version: "3.3"
 
 secrets:
-  cert.pem:
-    file: nginx/cert.pem
-  key.pem:
-    file: nginx/key.pem
   aws_creds:
     file: .aws/credentials
 
@@ -13,12 +9,18 @@ volumes:
   mongo-2-data:
   mongo-3-data:
 
+networks:
+  luzene:
+    external: true
+
 services:
   mongo-1:
     image: mongo:3.4
     command: ["mongod", "--replSet", "exploderSet"]
     ports:
       - 27017
+    networks:
+      - default
     deploy:
       placement:
         constraints: [node.hostname==explodinator-1]
@@ -27,6 +29,8 @@ services:
   mongo-2:
     image: mongo:3.4
     command: ["mongod", "--replSet", "exploderSet"]
+    networks:
+      - default
     ports:
       - 27017
     deploy:
@@ -39,6 +43,8 @@ services:
     command: ["mongod", "--replSet", "exploderSet"]
     ports:
       - 27017
+    networks:
+      - default
     deploy:
       placement:
         constraints: [node.hostname==explodinator-3]
@@ -62,16 +68,14 @@ services:
     image: bibilthaysose/explodinator-proxy
     environment:
       NODE_ENV: ${NODE_ENV}
-    secrets:
-      - cert.pem
-      - key.pem
+    networks:
+      - default
+      - luzene
     ports:
-      - "80:80"
-      - "443:443"
+      - "80"
     deploy:
       replicas: 1
       placement:
         constraints: [node.hostname==explodinator-1]
       restart_policy:
         condition: on-failure
-  

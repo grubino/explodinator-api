@@ -7,7 +7,7 @@ from datetime import datetime
 import boto3
 import flask
 from flask import request, abort, jsonify, redirect
-from flask.helpers import send_from_directory, url_for
+from flask.helpers import send_from_directory
 from flask.wrappers import Response
 from flask_cors import CORS
 from flask_login.utils import current_user
@@ -36,9 +36,10 @@ app.config['SECRET_KEY'] = 'supers3cr3t'
 app.config['SECURITY_PASSWORD_SALT'] = 's41t0fth334rth'
 
 app.config['MONGODB_SETTINGS'] = {
-    'host': 'mongodb://{}:{}/{}'.format(os.environ.get('MONGODB_HOST', 'localhost'),
-                                        os.environ.get('MONGODB_PORT', 27017),
-                                        os.environ.get('MONGODB_DB', 'explodinator'))
+    'host': 'mongodb://{}:{}/{}?replicaSet={}'.format(os.environ.get('MONGODB_HOST', 'localhost'),
+                                                      os.environ.get('MONGODB_PORT', 27017),
+                                                      os.environ.get('MONGODB_DB', 'explodinator'),
+                                                      os.environ.get('MONGODB_RS', 'exploderSet'))
 }
 
 db = MongoEngine(app)
